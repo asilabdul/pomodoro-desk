@@ -1,12 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { formatClock, secondsFor, type Mode } from '../lib/time';
+import { readMode, writeMode } from '../lib/storage';
 
 export function Timer() {
   const [mode, setMode] = useState<Mode>('focus');
   const [remaining, setRemaining] = useState(secondsFor('focus'));
   const [running, setRunning] = useState(false);
-  useEffect(() => { setRemaining(secondsFor(mode)); setRunning(false); }, [mode]);
+  useEffect(() => { const next = readMode(); setMode(next); setRemaining(secondsFor(next)); }, []);
+  useEffect(() => { writeMode(mode); setRemaining(secondsFor(mode)); setRunning(false); }, [mode]);
   useEffect(() => {
     if (!running || remaining === 0) return;
     const id = window.setInterval(() => setRemaining((n) => Math.max(0, n - 1)), 1000);
