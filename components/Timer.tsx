@@ -1,19 +1,28 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatClock, secondsFor, type Mode } from '../lib/time';
 import { readMode, writeMode } from '../lib/storage';
+import { chime } from '../lib/sound';
 
 export function Timer() {
   const [mode, setMode] = useState<Mode>('focus');
   const [remaining, setRemaining] = useState(secondsFor('focus'));
   const [running, setRunning] = useState(false);
+  const armed = useRef(false);
   useEffect(() => { const next = readMode(); setMode(next); setRemaining(secondsFor(next)); }, []);
-  useEffect(() => { writeMode(mode); setRemaining(secondsFor(mode)); setRunning(false); }, [mode]);
+  useEffect(() => { writeMode(mode); setRemaining(secondsFor(mode)); setRunning(false); armed.current = false; }, [mode]);
   useEffect(() => {
     if (!running || remaining === 0) return;
+    armed.current = true;
     const id = window.setInterval(() => setRemaining((n) => Math.max(0, n - 1)), 1000);
     return () => window.clearInterval(id);
   }, [running, remaining]);
+  useEffect(() => {
+    if (remaining === 0 && armed.current) {
+      armed.current = false;
+      chime();
+    }
+  }, [remaining]);
   return (
     <section>
       <div className="modes">
