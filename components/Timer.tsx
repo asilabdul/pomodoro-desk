@@ -18,11 +18,17 @@ export function Timer() {
     return () => window.clearInterval(id);
   }, [running, remaining]);
   useEffect(() => {
-    if (remaining === 0 && armed.current) {
-      armed.current = false;
-      chime();
-    }
+    if (remaining === 0 && armed.current) { armed.current = false; chime(); }
   }, [remaining]);
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.code !== 'Space') return;
+      event.preventDefault();
+      setRunning((v) => !v);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   return (
     <section>
       <div className="modes">
@@ -31,6 +37,7 @@ export function Timer() {
         ))}
       </div>
       <p className="clock">{formatClock(remaining)}</p>
+      <p className="hint">Space starts and pauses</p>
       <div className="actions">
         <button type="button" onClick={() => setRunning((v) => !v)}>{running ? 'Pause' : 'Start'}</button>
         <button type="button" onClick={() => { setRunning(false); setRemaining(secondsFor(mode)); }}>Reset</button>
