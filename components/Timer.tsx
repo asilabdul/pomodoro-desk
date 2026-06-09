@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { formatClock, secondsFor, type Mode } from '../lib/time';
 import { readMode, writeMode } from '../lib/storage';
 import { chime } from '../lib/sound';
+import { recordFocusComplete } from '../lib/stats';
 
 export function Timer() {
   const [mode, setMode] = useState<Mode>('focus');
@@ -18,8 +19,12 @@ export function Timer() {
     return () => window.clearInterval(id);
   }, [running, remaining]);
   useEffect(() => {
-    if (remaining === 0 && armed.current) { armed.current = false; chime(); }
-  }, [remaining]);
+    if (remaining === 0 && armed.current) {
+      armed.current = false;
+      chime();
+      if (mode === 'focus') recordFocusComplete();
+    }
+  }, [remaining, mode]);
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if (event.code !== 'Space') return;
