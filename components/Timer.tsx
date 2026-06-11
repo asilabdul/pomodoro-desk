@@ -4,12 +4,14 @@ import { formatClock, secondsFor, type Mode } from '../lib/time';
 import { readMode, writeMode } from '../lib/storage';
 import { chime } from '../lib/sound';
 import { recordFocusComplete } from '../lib/stats';
+import { Ring } from './Ring';
 
 export function Timer() {
   const [mode, setMode] = useState<Mode>('focus');
   const [remaining, setRemaining] = useState(secondsFor('focus'));
   const [running, setRunning] = useState(false);
   const armed = useRef(false);
+  const total = secondsFor(mode);
   useEffect(() => { const next = readMode(); setMode(next); setRemaining(secondsFor(next)); }, []);
   useEffect(() => { writeMode(mode); setRemaining(secondsFor(mode)); setRunning(false); armed.current = false; }, [mode]);
   useEffect(() => {
@@ -25,15 +27,6 @@ export function Timer() {
       if (mode === 'focus') recordFocusComplete();
     }
   }, [remaining, mode]);
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (event.code !== 'Space') return;
-      event.preventDefault();
-      setRunning((v) => !v);
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
   return (
     <section>
       <div className="modes">
@@ -41,8 +34,10 @@ export function Timer() {
           <button key={item} type="button" data-active={mode === item} onClick={() => setMode(item)}>{item}</button>
         ))}
       </div>
-      <p className="clock">{formatClock(remaining)}</p>
-      <p className="hint">Space starts and pauses</p>
+      <div className="clock-wrap">
+        <Ring value={remaining} max={total} />
+        <p className="clock">{formatClock(remaining)}</p>
+      </div>
       <div className="actions">
         <button type="button" onClick={() => setRunning((v) => !v)}>{running ? 'Pause' : 'Start'}</button>
         <button type="button" onClick={() => { setRunning(false); setRemaining(secondsFor(mode)); }}>Reset</button>
