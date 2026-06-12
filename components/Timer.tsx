@@ -3,7 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 import { formatClock, secondsFor, type Mode } from '../lib/time';
 import { readMode, writeMode } from '../lib/storage';
 import { chime } from '../lib/sound';
-import { recordFocusComplete } from '../lib/stats';
+import { recordFocusComplete, todayCount } from '../lib/stats';
+import { notifyDone } from '../lib/notify';
+import { nextMode } from '../lib/flow';
 import { Ring } from './Ring';
 
 export function Timer() {
@@ -24,7 +26,9 @@ export function Timer() {
     if (remaining === 0 && armed.current) {
       armed.current = false;
       chime();
+      notifyDone(mode);
       if (mode === 'focus') recordFocusComplete();
+      setMode(nextMode(mode, todayCount()));
     }
   }, [remaining, mode]);
   return (
@@ -41,6 +45,7 @@ export function Timer() {
       <div className="actions">
         <button type="button" onClick={() => setRunning((v) => !v)}>{running ? 'Pause' : 'Start'}</button>
         <button type="button" onClick={() => { setRunning(false); setRemaining(secondsFor(mode)); }}>Reset</button>
+        <button type="button" onClick={() => setMode(nextMode(mode, todayCount()))}>Skip</button>
       </div>
     </section>
   );
